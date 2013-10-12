@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
 
   s.homepage     = "https://github.com/simoncoulton/SCSlidingViewController"
   s.screenshots  = "http://dribbble.s3.amazonaws.com/users/14827/screenshots/1193991/8.png"
-  s.license      = 'MIT'
+  s.license      = { :type => 'MIT', :file => 'LICENSE.txt' }
   s.author       = { "Simon Coulton" => "simon.coulton@gmail.com" }
   s.platform     = :ios, '6.1'
   s.source       = { :git => "https://github.com/simoncoulton/SCSlidingViewController.git", :tag => "0.0.1" }
