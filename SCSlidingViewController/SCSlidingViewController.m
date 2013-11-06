@@ -195,6 +195,7 @@
     UIView *senderView = [sender view];
     CGPoint translatedPoint = [(UIPanGestureRecognizer*)sender translationInView:self.view];
     CGPoint velocity = [(UIPanGestureRecognizer*)sender velocityInView:senderView];
+    CGFloat topLeftX = senderView.frame.origin.x;
 
     if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateBegan) {
         // Determine which view to bring to the top
@@ -219,7 +220,6 @@
     }
 
     if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateEnded) {
-        CGFloat topLeftX = senderView.frame.origin.x;
         CGFloat frameWidth = senderView.frame.size.width;
         CGFloat widthVisibleAfterPeak = frameWidth - self.peakAmount;
         CGFloat thresholdCenter = (frameWidth - widthVisibleAfterPeak) * self.peakThreshold;
@@ -241,30 +241,32 @@
     }
 
     if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateChanged) {
-        CGFloat topLeftX = senderView.frame.origin.x;
+        CGFloat centerX = senderView.center.x;
+        CGFloat centerY = senderView.center.y;
+        CGPoint newCenter = CGPointMake(centerX + translatedPoint.x, centerY);
+        CGFloat frameCenter = senderView.frame.size.width / 2;
+
         // Sliding to the left
-        if (velocity.x < 0 && !self.rightSideViewController && topLeftX < 1) {
+        if ((velocity.x < 0 && !self.rightSideViewController && newCenter.x < frameCenter)
+            || (velocity.x > 0 && !self.leftSideViewController && newCenter.x > frameCenter)
+            || (self.showingLeft && newCenter.x < frameCenter && !self.allowOverswipe)
+            || (self.showingRight && newCenter.x > frameCenter && !self.allowOverswipe)) {
             return;
         }
-        // Sliding to the right
-        if (velocity.x > 0 && !self.leftSideViewController && topLeftX > -1) {
-            return;
-        }
-        if (topLeftX < 1) {
+
+        senderView.center = newCenter;
+        [(UIPanGestureRecognizer*)sender setTranslation:CGPointMake(0,0) inView:self.view];
+
+        if (newCenter.x < frameCenter) {
             self.showingRight = YES;
             self.showingLeft = NO;
-        } else if (topLeftX > 1) {
+        } else if (newCenter.x > frameCenter) {
             self.showingLeft = YES;
             self.showingRight = NO;
         } else {
             self.showingRight = NO;
             self.showingLeft = NO;
         }
-        CGFloat centerX = senderView.center.x;
-        CGFloat centerY = senderView.center.y;
-
-        senderView.center = CGPointMake(centerX + translatedPoint.x, centerY);
-        [(UIPanGestureRecognizer*)sender setTranslation:CGPointMake(0,0) inView:self.view];
         _previousVelocity = velocity;
     }
 }
