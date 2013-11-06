@@ -185,11 +185,8 @@
 
 - (void)addGestures
 {
-    UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragView:)];
-    [panRecognizer setMinimumNumberOfTouches:1];
-    [panRecognizer setMaximumNumberOfTouches:1];
-    [panRecognizer setDelegate:self];
-    [self.topViewController.view addGestureRecognizer:panRecognizer];
+    self.panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragView:)];
+    [self.topViewController.view addGestureRecognizer:self.panGesture];
 
     UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapClose:)];
     [self.topViewController.view addGestureRecognizer:tapRecognizer];
