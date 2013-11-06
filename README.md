@@ -13,14 +13,14 @@ In your `RootViewController.m`, do the following to instantiate the left and rig
 	#import "RootViewController.h"
 	#import "TopViewController.h"
 	#import "MenuViewController.h"
-	
+
 	@interface RootViewController () <SCSlidingViewControllerDelegate>
-	
+
 	@end
-	
+
 	@implementation RootViewController
-	
-	
+
+
 	- (void)viewDidLoad
 	{
 	    // Initial view controller, setup the views to be used.
@@ -29,22 +29,22 @@ In your `RootViewController.m`, do the following to instantiate the left and rig
 	    self.leftSideViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"Menu"];
 	    self.rightSideViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"Context"];
 	}
-	
+
 	@end
 
 In your `RootViewController.h` file, make sure you subclass SCSlidingViewController
 
 	#import <UIKit/UIKit.h>
 	#import "SCSlidingViewController.h"
-	
+
 	@interface RootViewController : SCSlidingViewController
-	
+
 	@end
 
 From any of your other view controllers, when you want to change the topViewController, simply call:
 
 	[self.slidingViewController changeTopViewController:[self.storyboard instantiateViewControllerWithIdentifier:@"YOUR VIEW CONTROLLER NAME"]];
-	
+
 ### Customizing the top view
 
 The following are exposed (and should be straight forward in terms of functionality).
@@ -59,7 +59,7 @@ The following are exposed (and should be straight forward in terms of functional
 	@property (nonatomic) CGFloat shadowOffsetY;
 	@property (retain, nonatomic) UIColor *shadowColor;
 	@property (nonatomic) CGFloat animationDuration;
-	
+
 `peakThreshold` will affect the panning gesture when opening a side. If the view controller is panned more than the percentage amount of the window frame width minus the visible amount of the view controller when being peaked, the view controller will be displayed, otherwise the top view controller will snap back to the original position.
 
 `allowOverswipe` prevents the view controller from displaying the opposite side from being viewable when panning.
@@ -71,8 +71,8 @@ The following events are called when the top view is changed (but are not trigge
 	- (void)willChangeTopViewController;
 	- (void)didChangeTopViewController;
 
-	
+
 ## Todo
 
-1. Be able to set the status bar text color prior to the relevant side view controller being shown.
-2. Test on iOS6, though some small preliminary tests have been done and it seems to work.
+1. Test on iOS6, though some small preliminary tests have been done and it seems to work.
+2. Ability to round corners of content in UINavigationController

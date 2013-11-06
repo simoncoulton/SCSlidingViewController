@@ -126,6 +126,9 @@
     // Display the leftSide view controller
     if (self.rightSideViewController) {
         [self.view sendSubviewToBack:self.rightSideViewController.view];
+        if ([self.rightSideViewController respondsToSelector:@selector(preferredStatusBarStyle)]) {
+            [[UIApplication sharedApplication] setStatusBarStyle:[self.rightSideViewController preferredStatusBarStyle]];
+        }
     }
     if (!self.leftSideViewController) {
         return;
@@ -148,6 +151,9 @@
     // Display the rightSide view controller
     if (self.leftSideViewController) {
         [self.view sendSubviewToBack:self.leftSideViewController.view];
+        if ([self.leftSideViewController respondsToSelector:@selector(preferredStatusBarStyle)]) {
+            [[UIApplication sharedApplication] setStatusBarStyle:[self.leftSideViewController preferredStatusBarStyle]];
+        }
     }
     if (!self.rightSideViewController) {
         return;
@@ -199,23 +205,26 @@
 
     if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateBegan) {
         // Determine which view to bring to the top
-        UIView *viewToShow = nil;
+        UIViewController *viewToShow = nil;
 
         if (velocity.x > 0) {
             if (!self.showingRight && self.rightSideViewController) {
-                viewToShow = self.rightSideViewController.view;
+                viewToShow = self.rightSideViewController;
             } else {
                 return;
             }
         } else {
             if (!self.showingLeft && self.leftSideViewController) {
-                viewToShow = self.leftSideViewController.view;
+                viewToShow = self.leftSideViewController;
             } else {
                 return;
             }
 
         }
-        [self.view sendSubviewToBack:viewToShow];
+        if ([viewToShow respondsToSelector:@selector(preferredStatusBarStyle)]) {
+            [[UIApplication sharedApplication] setStatusBarStyle:[viewToShow preferredStatusBarStyle]];
+        }
+        [self.view sendSubviewToBack:viewToShow.view];
         [senderView bringSubviewToFront:[(UIPanGestureRecognizer*)sender view]];
     }
 
