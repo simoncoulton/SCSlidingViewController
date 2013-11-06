@@ -186,7 +186,8 @@
 - (void)addGestures
 {
     self.panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragView:)];
-	[self.topViewController.view addGestureRecognizer:self.panGesture];
+    [self.topViewController.view addGestureRecognizer:self.panGesture];
+    self.panGesture.delegate = self;
 
     UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapClose:)];
     [self.topViewController.view addGestureRecognizer:tapRecognizer];
@@ -196,11 +197,11 @@
 {
     [[[(UITapGestureRecognizer*)sender view] layer] removeAllAnimations];
     UIView *senderView = [sender view];
-	CGPoint translatedPoint = [(UIPanGestureRecognizer*)sender translationInView:self.view];
-	CGPoint velocity = [(UIPanGestureRecognizer*)sender velocityInView:senderView];
+    CGPoint translatedPoint = [(UIPanGestureRecognizer*)sender translationInView:self.view];
+    CGPoint velocity = [(UIPanGestureRecognizer*)sender velocityInView:senderView];
     CGFloat topLeftX = senderView.frame.origin.x;
 
-	if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateBegan) {
+    if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateBegan) {
         // Determine which view to bring to the top
         UIViewController *viewToShow = nil;
 
@@ -223,9 +224,9 @@
         }
         [self.view sendSubviewToBack:viewToShow.view];
         [senderView bringSubviewToFront:[(UIPanGestureRecognizer*)sender view]];
-	}
+    }
 
-	if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateEnded) {
+    if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateEnded) {
         CGFloat frameWidth = senderView.frame.size.width;
         CGFloat widthVisibleAfterPeak = frameWidth - self.peakAmount;
         CGFloat thresholdCenter = (frameWidth - widthVisibleAfterPeak) * self.peakThreshold;
@@ -244,14 +245,14 @@
         } else {
             [self snapToOrigin];
         }
-	}
+    }
 
-	if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateChanged) {
+    if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateChanged) {
         CGFloat centerX = senderView.center.x;
         CGFloat centerY = senderView.center.y;
         CGPoint newCenter = CGPointMake(centerX + translatedPoint.x, centerY);
         CGFloat frameCenter = senderView.frame.size.width / 2;
-        
+
         // Sliding to the left
         if ((velocity.x < 0 && !self.rightSideViewController && newCenter.x < frameCenter)
             || (velocity.x > 0 && !self.leftSideViewController && newCenter.x > frameCenter)
@@ -259,10 +260,10 @@
             || (self.showingRight && newCenter.x > frameCenter && !self.allowOverswipe)) {
             return;
         }
-        
+
         senderView.center = newCenter;
         [(UIPanGestureRecognizer*)sender setTranslation:CGPointMake(0,0) inView:self.view];
-        
+
         if (newCenter.x < frameCenter) {
             self.showingRight = YES;
             self.showingLeft = NO;
@@ -274,7 +275,7 @@
             self.showingLeft = NO;
         }
         _previousVelocity = velocity;
-	}
+    }
 }
 
 - (void)tapClose:(id)sender

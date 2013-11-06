@@ -187,6 +187,7 @@
 {
     self.panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragView:)];
     [self.topViewController.view addGestureRecognizer:self.panGesture];
+    self.panGesture.delegate = self;
 
     UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapClose:)];
     [self.topViewController.view addGestureRecognizer:tapRecognizer];
