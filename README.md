@@ -49,14 +49,20 @@ From any of your other view controllers, when you want to change the topViewCont
 
 The following are exposed (and should be straight forward in terms of functionality).
 
+	@property (nonatomic) BOOL allowOverswipe;
 	@property (nonatomic) int topViewOffsetY;
 	@property (nonatomic) int peakAmount;
+	@property (nonatomic) CGFloat peakThreshold;
 	@property (nonatomic) CGFloat cornerRadius;
 	@property (nonatomic) CGFloat shadowOpacity;
 	@property (nonatomic) CGFloat shadowOffsetX;
 	@property (nonatomic) CGFloat shadowOffsetY;
 	@property (retain, nonatomic) UIColor *shadowColor;
 	@property (nonatomic) CGFloat animationDuration;
+	
+`peakThreshold` will affect the panning gesture when opening a side. If the view controller is panned more than the percentage amount of the window frame width minus the visible amount of the view controller when being peaked, the view controller will be displayed, otherwise the top view controller will snap back to the original position.
+
+`allowOverswipe` prevents the view controller from displaying the opposite side from being viewable when panning.
 
 ### Events
 
@@ -68,6 +74,5 @@ The following events are called when the top view is changed (but are not trigge
 	
 ## Todo
 
-1. Be able to prevent the overswipe (displaying the left side, then swiping far enough to see the right and the reverse)
-2. Be able to set the status bar text color prior to the relevant side view controller being shown.
-3. Test on iOS6, though some small preliminary tests have been done and it seems to work.
+1. Be able to set the status bar text color prior to the relevant side view controller being shown.
+2. Test on iOS6, though some small preliminary tests have been done and it seems to work.

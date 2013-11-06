@@ -22,6 +22,7 @@
 @property (nonatomic) BOOL allowOverswipe;
 @property (nonatomic) int topViewOffsetY;
 @property (nonatomic) int peakAmount;
+@property (nonatomic) CGFloat peakThreshold;
 @property (nonatomic) CGFloat cornerRadius;
 @property (nonatomic) CGFloat shadowOpacity;
 @property (nonatomic) CGFloat shadowOffsetX;
