@@ -177,7 +177,9 @@
     self.showingRight = NO;
     [UIView animateWithDuration:self.animationDuration / 2 delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
         self.topViewController.view.frame = CGRectMake(0, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
-    } completion:^(BOOL finished) {}];
+    } completion:^(BOOL finished) {
+        [self.topViewController.view removeGestureRecognizer:self.tapGesture];
+    }];
 }
 
 #pragma mark -
