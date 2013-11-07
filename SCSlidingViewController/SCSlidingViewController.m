@@ -9,8 +9,6 @@
 
 @interface SCSlidingViewController () <UIGestureRecognizerDelegate>
 
-@property (assign, nonatomic) BOOL showingLeft;
-@property (assign, nonatomic) BOOL showingRight;
 @property (assign, nonatomic) CGPoint previousVelocity;
 
 @end
@@ -124,6 +122,7 @@
 - (void)slideRight
 {
     // Display the leftSide view controller
+    [self attachTapGesture];
     if (self.rightSideViewController) {
         [self.view sendSubviewToBack:self.rightSideViewController.view];
         if ([self.rightSideViewController respondsToSelector:@selector(preferredStatusBarStyle)]) {
@@ -149,6 +148,7 @@
 - (void)slideLeft
 {
     // Display the rightSide view controller
+    [self attachTapGesture];
     if (self.leftSideViewController) {
         [self.view sendSubviewToBack:self.leftSideViewController.view];
         if ([self.leftSideViewController respondsToSelector:@selector(preferredStatusBarStyle)]) {
@@ -189,8 +189,14 @@
     [self.topViewController.view addGestureRecognizer:self.panGesture];
     self.panGesture.delegate = self;
 
-    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapClose:)];
-    [self.topViewController.view addGestureRecognizer:tapRecognizer];
+    self.tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapClose:)];
+    [self.topViewController.view removeGestureRecognizer:self.tapGesture];
+}
+
+- (void)attachTapGesture
+{
+    [self.topViewController.view removeGestureRecognizer:self.tapGesture];
+    [self.topViewController.view addGestureRecognizer:self.tapGesture];
 }
 
 - (void)dragView:(id)sender
