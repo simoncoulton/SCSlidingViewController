@@ -30,8 +30,13 @@
 @property (retain, nonatomic) UIColor *shadowColor;
 @property (nonatomic) CGFloat animationDuration;
 
+#pragma mark Visibility
+@property (assign, nonatomic) BOOL showingLeft;
+@property (assign, nonatomic) BOOL showingRight;
+
 #pragma mark Gestures
 @property (strong, nonatomic) UIGestureRecognizer *panGesture;
+@property (strong, nonatomic) UIGestureRecognizer *tapGesture;
 
 #pragma mark Animations
 - (void)slideRight;

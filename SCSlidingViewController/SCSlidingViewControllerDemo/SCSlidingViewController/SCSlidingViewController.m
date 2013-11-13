@@ -296,7 +296,13 @@
 
 - (void)changeTopViewController:(UIViewController *)viewController
 {
-    [self willChangeTopViewController];
+    BOOL replaceView = YES;
+    if (viewController.storyboard && [viewController.restorationIdentifier isEqualToString:self.topViewController.restorationIdentifier]) {
+        replaceView = NO;
+    }
+    if (replaceView) {
+        [self willChangeTopViewController];
+    }
 
     CGFloat xPos = self.view.frame.size.width + 10;
     if (self.showingRight) {
@@ -306,13 +312,15 @@
     [UIView animateWithDuration:self.animationDuration delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
         self.topViewController.view.frame = frame;
     } completion:^(BOOL finished) {
-        [self.topViewController.view removeFromSuperview];
-        [self.topViewController willMoveToParentViewController:nil];
-        [self.topViewController removeFromParentViewController];
-        self.topViewController = viewController;
-        self.topViewController.view.frame = frame;
+        if (replaceView) {
+            [self.topViewController.view removeFromSuperview];
+            [self.topViewController willMoveToParentViewController:nil];
+            [self.topViewController removeFromParentViewController];
+            self.topViewController = viewController;
+            self.topViewController.view.frame = frame;
+            [self didChangeTopViewController];
+        }
         [self snapToOrigin];
-        [self didChangeTopViewController];
     }];
 }
 
