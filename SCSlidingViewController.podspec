@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.author       = { "Simon Coulton" => "simon.coulton@gmail.com" }
   s.platform     = :ios, '6.1'
   s.source       = { :git => "https://github.com/simoncoulton/SCSlidingViewController.git", :tag => "1.0.3" }
-  s.source_files  = 'SCSlidingViewController', 'SCSlidingViewController/**/*.{h,m}'
+  s.source_files  = 'SCSlidingViewController/SCSlidingViewControllerDemo/SCSlidingViewController', 'SCSlidingViewController/SCSlidingViewControllerDemo/SCSlidingViewController/*.{h,m}'
   s.exclude_files = 'Classes/Exclude'
 
 end
