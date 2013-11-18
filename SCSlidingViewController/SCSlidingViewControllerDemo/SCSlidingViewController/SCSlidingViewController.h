@@ -20,6 +20,7 @@
 
 #pragma mark Settings
 @property (nonatomic) BOOL allowOverswipe;
+@property (nonatomic) BOOL animateOnClose;
 @property (nonatomic) int topViewOffsetY;
 @property (nonatomic) int peakAmount;
 @property (nonatomic) CGFloat peakThreshold;
@@ -29,6 +30,7 @@
 @property (nonatomic) CGFloat shadowOffsetY;
 @property (retain, nonatomic) UIColor *shadowColor;
 @property (nonatomic) CGFloat animationDuration;
+@property (nonatomic) BOOL enabled;
 
 #pragma mark Visibility
 @property (assign, nonatomic) BOOL showingLeft;
@@ -45,10 +47,16 @@
 
 #pragma mark Change view
 - (void)changeTopViewController:(UIViewController *)viewController;
+- (void)changeTopViewController:(UIViewController *)viewController forceReload:(BOOL)forceReload;
+- (void)changeTopViewControllerFromStoryboard:(NSString *)identifier;
+- (void)changeTopViewControllerFromStoryboard:(NSString *)identifier forceReload:(BOOL)forceReload;
 
 #pragma mark Change view events
 - (void)willChangeTopViewController;
 - (void)didChangeTopViewController;
+
+#pragma mark Shadow
+- (void)viewHasShadow:(BOOL)hasShadow withColor:(UIColor *)color withCornerRadius:(CGFloat)cornerRadius withShadowOffsetX:(CGFloat)shadowOffsetX withShadowOffsetY:(CGFloat)shadowOffsetY andOpacity:(CGFloat)opacity;
 
 @end
 
@@ -56,6 +64,5 @@
 @interface UIViewController(SlidingViewCategory)
 
 - (SCSlidingViewController *)slidingViewController;
-- (void)viewHasShadow:(BOOL)hasShadow withColor:(UIColor *)color withCornerRadius:(CGFloat)cornerRadius withShadowOffsetX:(CGFloat)shadowOffsetX withShadowOffsetY:(CGFloat)shadowOffsetY andOpacity:(CGFloat)opacity;
 
 @end

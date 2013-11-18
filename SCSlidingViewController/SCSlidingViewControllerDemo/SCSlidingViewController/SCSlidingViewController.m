@@ -9,6 +9,7 @@
 
 @interface SCSlidingViewController () <UIGestureRecognizerDelegate>
 
+@property (strong, nonatomic) UIView *containerView;
 @property (assign, nonatomic) CGPoint previousVelocity;
 
 @end
@@ -26,17 +27,6 @@
     }
 
     return (SCSlidingViewController *)viewController;
-}
-
-- (void)viewHasShadow:(BOOL)hasShadow withColor:(UIColor *)color withCornerRadius:(CGFloat)cornerRadius withShadowOffsetX:(CGFloat)shadowOffsetX withShadowOffsetY:(CGFloat)shadowOffsetY andOpacity:(CGFloat)opacity
-{
-    self.view.layer.opaque = NO;
-    self.view.layer.cornerRadius = cornerRadius;
-
-    self.view.layer.shadowColor = color.CGColor;
-    self.view.layer.shadowRadius = cornerRadius;
-    self.view.layer.shadowOffset = CGSizeMake(shadowOffsetX, shadowOffsetY);
-    self.view.layer.shadowOpacity = opacity;
 }
 
 @end
@@ -61,33 +51,69 @@
         self.topViewOffsetY = 0;
     }
     self.allowOverswipe = NO;
+    self.animateOnClose = NO;
     self.peakAmount = 140;
     self.peakThreshold = .5;
     self.shadowColor = [UIColor blackColor];
-    self.shadowOpacity = 0.3f;
+    self.shadowOpacity = 0.5f;
     self.shadowOffsetX = self.shadowOffsetY = 3.0f;
     self.cornerRadius = 4.0f;
     self.animationDuration = 0.5f;
+    self.enabled = YES;
 }
 
 #pragma mark -
 #pragma mark Set the views
 
+- (UIView *)containerView
+{
+    if (_containerView) {
+        return _containerView;
+    }
+
+    UIView *view = [[UIView alloc] initWithFrame:CGRectOffset(self.view.frame, 0, 0)];
+    _containerView = view;
+    view.backgroundColor = [UIColor clearColor];
+    view.frame = CGRectMake(0, self.topViewOffsetY, view.frame.size.width, view.frame.size.height - self.topViewOffsetY);
+    [self.view addSubview:_containerView];
+
+    return view;
+}
+
 - (void)setTopViewController:(UIViewController *)topViewController
 {
+    CGRect frame = self.containerView.frame;
     [topViewController.view removeFromSuperview];
     [topViewController willMoveToParentViewController:nil];
     [topViewController removeFromParentViewController];
 
     self->_topViewController = topViewController;
-    [self.view addSubview:topViewController.view];
+    [self.containerView addSubview:topViewController.view];
     [self addChildViewController:topViewController];
     [topViewController didMoveToParentViewController:self];
 
-    // Adjust the frame to sit below the status bar
-    topViewController.view.frame = CGRectMake(0, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
-    [topViewController viewHasShadow:YES withColor:self.shadowColor withCornerRadius:self.cornerRadius withShadowOffsetX:self.shadowOffsetX withShadowOffsetY:self.shadowOffsetY andOpacity:self.shadowOpacity];
+    topViewController.view.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
+    [self viewHasShadow:(self.shadowOpacity == 0 ? NO : YES) withColor:self.shadowColor withCornerRadius:self.cornerRadius withShadowOffsetX:self.shadowOffsetX withShadowOffsetY:self.shadowOffsetY andOpacity:self.shadowOpacity];
     [self addGestures];
+    [self.view endEditing:YES];
+}
+
+- (void)viewHasShadow:(BOOL)hasShadow withColor:(UIColor *)color withCornerRadius:(CGFloat)cornerRadius withShadowOffsetX:(CGFloat)shadowOffsetX withShadowOffsetY:(CGFloat)shadowOffsetY andOpacity:(CGFloat)opacity
+{
+    self.topViewController.view.layer.opaque = NO;
+    self.topViewController.view.layer.cornerRadius = cornerRadius;
+
+    if (hasShadow) {
+        self.containerView.layer.shouldRasterize = YES;
+        self.containerView.layer.rasterizationScale = [[UIScreen mainScreen] scale];
+        self.containerView.layer.shadowOpacity = opacity;
+        self.containerView.layer.shadowOffset = CGSizeMake(shadowOffsetX, shadowOffsetY);
+        self.containerView.layer.shadowColor = color.CGColor;
+        self.containerView.layer.shadowRadius = cornerRadius;
+        self.containerView.alpha = 1;
+    } else {
+        self.containerView.alpha = 0;
+    }
 }
 
 - (void)setLeftSideViewController:(UIViewController *)leftSideViewController
@@ -132,13 +158,13 @@
     if (!self.leftSideViewController) {
         return;
     }
-    [self.view bringSubviewToFront:self.topViewController.view];
-    if (self.showingLeft && self.topViewController.view.frame.origin.x == self.peakAmount) {
+    [self.view bringSubviewToFront:self.containerView];
+    if (self.showingLeft && self.containerView.frame.origin.x == self.peakAmount) {
         [self snapToOrigin];
     } else {
         CGFloat xPos = self.peakAmount;
         [UIView animateWithDuration:self.animationDuration delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
-            self.topViewController.view.frame = CGRectMake(xPos, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
+            self.containerView.frame = CGRectMake(xPos, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
         } completion:^(BOOL finished) {
             self.showingLeft = YES;
         }];
@@ -158,13 +184,13 @@
     if (!self.rightSideViewController) {
         return;
     }
-    [self.view bringSubviewToFront:self.topViewController.view];
-    if (self.showingRight && self.topViewController.view.frame.origin.x == 0 - self.peakAmount) {
+    [self.view bringSubviewToFront:self.containerView];
+    if (self.showingRight && self.containerView.frame.origin.x == 0 - self.peakAmount) {
         [self snapToOrigin];
     } else {
         CGFloat xPos = 0 - self.peakAmount;
         [UIView animateWithDuration:self.animationDuration delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
-            self.topViewController.view.frame = CGRectMake(xPos, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
+            self.containerView.frame = CGRectMake(xPos, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
         } completion:^(BOOL finished) {
             self.showingRight = YES;
         }];
@@ -176,9 +202,9 @@
     self.showingLeft = NO;
     self.showingRight = NO;
     [UIView animateWithDuration:self.animationDuration / 2 delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
-        self.topViewController.view.frame = CGRectMake(0, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
+        self.containerView.frame = CGRectMake(0, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
     } completion:^(BOOL finished) {
-        [self.topViewController.view removeGestureRecognizer:self.tapGesture];
+        [self.containerView removeGestureRecognizer:self.tapGesture];
     }];
 }
 
@@ -203,13 +229,18 @@
 
 - (void)dragView:(id)sender
 {
+    if (!self.enabled) {
+        return;
+    }
     [[[(UITapGestureRecognizer*)sender view] layer] removeAllAnimations];
-    UIView *senderView = [sender view];
+    UIView *senderView = [[sender view] superview];
     CGPoint translatedPoint = [(UIPanGestureRecognizer*)sender translationInView:self.view];
     CGPoint velocity = [(UIPanGestureRecognizer*)sender velocityInView:senderView];
     CGFloat topLeftX = senderView.frame.origin.x;
 
     if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateBegan) {
+        [self.topViewController.view endEditing:YES];
+
         // Determine which view to bring to the top
         UIViewController *viewToShow = nil;
 
@@ -294,11 +325,30 @@
 #pragma mark -
 #pragma mark Change view controller
 
+- (void)changeTopViewControllerFromStoryboard:(NSString *)identifier
+{
+    [self changeTopViewControllerFromStoryboard:identifier forceReload:NO];
+}
+
+- (void)changeTopViewControllerFromStoryboard:(NSString *)identifier forceReload:(BOOL)forceReload
+{
+    [self changeTopViewController:[self.storyboard instantiateViewControllerWithIdentifier:identifier] forceReload:forceReload];
+}
+
 - (void)changeTopViewController:(UIViewController *)viewController
 {
+    [self changeTopViewController:viewController forceReload:NO];
+}
+
+- (void)changeTopViewController:(UIViewController *)viewController forceReload:(BOOL)forceReload
+{
     BOOL replaceView = YES;
-    if (viewController.storyboard && [viewController.restorationIdentifier isEqualToString:self.topViewController.restorationIdentifier]) {
+    if (viewController.storyboard && [viewController.restorationIdentifier isEqualToString:self.topViewController.restorationIdentifier] && !forceReload) {
         replaceView = NO;
+        if (!self.animateOnClose) {
+            [self snapToOrigin];
+            return;
+        }
     }
     if (replaceView) {
         [self willChangeTopViewController];
@@ -308,16 +358,20 @@
     if (self.showingRight) {
         xPos = xPos * -1;
     }
+
     CGRect frame = CGRectMake(xPos, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
     [UIView animateWithDuration:self.animationDuration delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
-        self.topViewController.view.frame = frame;
+        self.containerView.frame = frame;
     } completion:^(BOOL finished) {
         if (replaceView) {
+            // Remove existing top view controller from view
             [self.topViewController.view removeFromSuperview];
             [self.topViewController willMoveToParentViewController:nil];
             [self.topViewController removeFromParentViewController];
+
+            // Replace with new view controller
             self.topViewController = viewController;
-            self.topViewController.view.frame = frame;
+            self.topViewController.view.frame = CGRectMake(0, 0, self.containerView.frame.size.width, self.containerView.frame.size.height);
             [self didChangeTopViewController];
         }
         [self snapToOrigin];
