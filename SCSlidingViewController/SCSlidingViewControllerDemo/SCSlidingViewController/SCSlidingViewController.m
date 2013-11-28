@@ -10,6 +10,7 @@
 @interface SCSlidingViewController () <UIGestureRecognizerDelegate>
 
 @property (strong, nonatomic) UIView *containerView;
+@property (strong, nonatomic) UIView *overlayView;
 @property (assign, nonatomic) CGPoint previousVelocity;
 
 @end
@@ -25,7 +26,7 @@
     while (!(viewController == nil || [viewController isKindOfClass:[SCSlidingViewController class]])) {
         viewController = viewController.parentViewController;
     }
-
+    
     return (SCSlidingViewController *)viewController;
 }
 
@@ -67,16 +68,35 @@
 
 - (UIView *)containerView
 {
+    // The view that the top view controller will be added to
     if (_containerView) {
         return _containerView;
     }
-
+    
     UIView *view = [[UIView alloc] initWithFrame:CGRectOffset(self.view.frame, 0, 0)];
     _containerView = view;
     view.backgroundColor = [UIColor clearColor];
     view.frame = CGRectMake(0, self.topViewOffsetY, view.frame.size.width, view.frame.size.height - self.topViewOffsetY);
     [self.view addSubview:_containerView];
+    
+    return view;
+}
 
+- (UIView *)overlayView
+{
+    // Sits ontop of the top view controller while the view controller is panning
+    // and prevents other ui elements from triggering gestures
+    if (_overlayView) {
+        return _overlayView;
+    }
+    
+    UIView *view = [[UIView alloc] initWithFrame:CGRectOffset(self.view.frame, 0, 0)];
+    _overlayView = view;
+    view.backgroundColor = [UIColor clearColor];
+    view.frame = CGRectMake(0, 0, view.frame.size.width, view.frame.size.height - self.topViewOffsetY);
+    [self.containerView addSubview:_overlayView];
+    [self.containerView sendSubviewToBack:_overlayView];
+    
     return view;
 }
 
@@ -86,12 +106,12 @@
     [topViewController.view removeFromSuperview];
     [topViewController willMoveToParentViewController:nil];
     [topViewController removeFromParentViewController];
-
+    
     self->_topViewController = topViewController;
     [self.containerView addSubview:topViewController.view];
     [self addChildViewController:topViewController];
     [topViewController didMoveToParentViewController:self];
-
+    
     topViewController.view.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
     [self viewHasShadow:(self.shadowOpacity == 0 ? NO : YES) withColor:self.shadowColor withCornerRadius:self.cornerRadius withShadowOffsetX:self.shadowOffsetX withShadowOffsetY:self.shadowOffsetY andOpacity:self.shadowOpacity];
     [self addGestures];
@@ -102,7 +122,7 @@
 {
     self.topViewController.view.layer.opaque = NO;
     self.topViewController.view.layer.cornerRadius = cornerRadius;
-
+    
     if (hasShadow) {
         self.containerView.layer.shouldRasterize = YES;
         self.containerView.layer.rasterizationScale = [[UIScreen mainScreen] scale];
@@ -121,7 +141,7 @@
     [leftSideViewController.view removeFromSuperview];
     [leftSideViewController willMoveToParentViewController:nil];
     [leftSideViewController removeFromParentViewController];
-
+    
     self->_leftSideViewController = leftSideViewController;
     [self.view addSubview:leftSideViewController.view];
     [self.view sendSubviewToBack:leftSideViewController.view];
@@ -134,7 +154,7 @@
     [rightSideViewController.view removeFromSuperview];
     [rightSideViewController willMoveToParentViewController:nil];
     [rightSideViewController removeFromParentViewController];
-
+    
     self->_rightSideViewController = rightSideViewController;
     [self.view addSubview:rightSideViewController.view];
     [self.view sendSubviewToBack:rightSideViewController.view];
@@ -148,7 +168,6 @@
 - (void)slideRight
 {
     // Display the leftSide view controller
-    [self attachTapGesture];
     if (self.rightSideViewController) {
         [self.view sendSubviewToBack:self.rightSideViewController.view];
         if ([self.rightSideViewController respondsToSelector:@selector(preferredStatusBarStyle)]) {
@@ -167,6 +186,8 @@
             self.containerView.frame = CGRectMake(xPos, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
         } completion:^(BOOL finished) {
             self.showingLeft = YES;
+            [self switchGestureTargetFromView:self.topViewController.view toView:self.overlayView];
+            [self didFinishSliding];
         }];
     }
 }
@@ -174,7 +195,6 @@
 - (void)slideLeft
 {
     // Display the rightSide view controller
-    [self attachTapGesture];
     if (self.leftSideViewController) {
         [self.view sendSubviewToBack:self.leftSideViewController.view];
         if ([self.leftSideViewController respondsToSelector:@selector(preferredStatusBarStyle)]) {
@@ -193,8 +213,25 @@
             self.containerView.frame = CGRectMake(xPos, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
         } completion:^(BOOL finished) {
             self.showingRight = YES;
+            [self switchGestureTargetFromView:self.topViewController.view toView:self.overlayView];
+            [self didFinishSliding];
         }];
     }
+}
+
+- (void)switchGestureTargetFromView:(UIView *)fromView toView:(UIView *)toView
+{
+    [fromView removeGestureRecognizer:self.panGesture];
+    [toView removeGestureRecognizer:self.panGesture];
+    [fromView removeGestureRecognizer:self.tapGesture];
+    [toView removeGestureRecognizer:self.tapGesture];
+    if (toView == self.overlayView) {
+        [toView addGestureRecognizer:self.tapGesture];
+        [self.containerView bringSubviewToFront:self.overlayView];
+    } else {
+        [self.containerView sendSubviewToBack:self.overlayView];
+    }
+    [toView addGestureRecognizer:self.panGesture];
 }
 
 - (void)snapToOrigin
@@ -202,9 +239,12 @@
     self.showingLeft = NO;
     self.showingRight = NO;
     [UIView animateWithDuration:self.animationDuration / 2 delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
-        self.containerView.frame = CGRectMake(0, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
+        CGRect frame = CGRectMake(0, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
+        self.containerView.frame = frame;
     } completion:^(BOOL finished) {
-        [self.containerView removeGestureRecognizer:self.tapGesture];
+        [self switchGestureTargetFromView:self.overlayView toView:self.topViewController.view];
+        [self removeTapGestures];
+        [self didFinishSliding];
     }];
 }
 
@@ -213,18 +253,25 @@
 
 - (void)addGestures
 {
-    self.panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragView:)];
-    [self.topViewController.view addGestureRecognizer:self.panGesture];
-    self.panGesture.delegate = self;
-
-    self.tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapClose:)];
-    [self.topViewController.view removeGestureRecognizer:self.tapGesture];
+    if (!self->_panGesture) {
+        self.panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragView:)];
+        self.panGesture.delegate = self;
+    }
+    if (!self->_tapGesture) {
+        self.tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapClose:)];
+    }
+    [self switchGestureTargetFromView:self.overlayView toView:self.topViewController.view];
 }
 
 - (void)attachTapGesture
 {
-    [self.topViewController.view removeGestureRecognizer:self.tapGesture];
+    [self removeTapGestures];
     [self.topViewController.view addGestureRecognizer:self.tapGesture];
+}
+
+- (void)removeTapGestures
+{
+    [self.topViewController.view removeGestureRecognizer:self.tapGesture];
 }
 
 - (void)dragView:(id)sender
@@ -233,17 +280,17 @@
         return;
     }
     [[[(UITapGestureRecognizer*)sender view] layer] removeAllAnimations];
-    UIView *senderView = [[sender view] superview];
+    UIView *senderView = self.containerView;
     CGPoint translatedPoint = [(UIPanGestureRecognizer*)sender translationInView:self.view];
     CGPoint velocity = [(UIPanGestureRecognizer*)sender velocityInView:senderView];
     CGFloat topLeftX = senderView.frame.origin.x;
-
+    
     if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateBegan) {
         [self.topViewController.view endEditing:YES];
-
+        
         // Determine which view to bring to the top
         UIViewController *viewToShow = nil;
-
+        
         if (velocity.x > 0) {
             if (!self.showingRight && self.rightSideViewController) {
                 viewToShow = self.rightSideViewController;
@@ -256,7 +303,7 @@
             } else {
                 return;
             }
-
+            
         }
         if ([viewToShow respondsToSelector:@selector(preferredStatusBarStyle)]) {
             [[UIApplication sharedApplication] setStatusBarStyle:[viewToShow preferredStatusBarStyle]];
@@ -264,7 +311,7 @@
         [self.view sendSubviewToBack:viewToShow.view];
         [senderView bringSubviewToFront:[(UIPanGestureRecognizer*)sender view]];
     }
-
+    
     if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateEnded) {
         CGFloat frameWidth = senderView.frame.size.width;
         CGFloat widthVisibleAfterPeak = frameWidth - self.peakAmount;
@@ -285,13 +332,13 @@
             [self snapToOrigin];
         }
     }
-
+    
     if ([(UIPanGestureRecognizer*)sender state] == UIGestureRecognizerStateChanged) {
         CGFloat centerX = senderView.center.x;
         CGFloat centerY = senderView.center.y;
         CGPoint newCenter = CGPointMake(centerX + translatedPoint.x, centerY);
         CGFloat frameCenter = senderView.frame.size.width / 2;
-
+        
         // Sliding to the left
         if ((velocity.x < 0 && !self.rightSideViewController && newCenter.x < frameCenter)
             || (velocity.x > 0 && !self.leftSideViewController && newCenter.x > frameCenter)
@@ -299,10 +346,11 @@
             || (self.showingRight && newCenter.x > frameCenter && !self.allowOverswipe)) {
             return;
         }
-
+        
         senderView.center = newCenter;
+        //        self.overlayView.center = newCenter;
         [(UIPanGestureRecognizer*)sender setTranslation:CGPointMake(0,0) inView:self.view];
-
+        
         if (newCenter.x < frameCenter) {
             self.showingRight = YES;
             self.showingLeft = NO;
@@ -353,12 +401,12 @@
     if (replaceView) {
         [self willChangeTopViewController];
     }
-
+    
     CGFloat xPos = self.view.frame.size.width + 10;
     if (self.showingRight) {
         xPos = xPos * -1;
     }
-
+    
     CGRect frame = CGRectMake(xPos, self.topViewOffsetY, self.view.frame.size.width, self.view.frame.size.height - self.topViewOffsetY);
     [UIView animateWithDuration:self.animationDuration delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
         self.containerView.frame = frame;
@@ -368,7 +416,7 @@
             [self.topViewController.view removeFromSuperview];
             [self.topViewController willMoveToParentViewController:nil];
             [self.topViewController removeFromParentViewController];
-
+            
             // Replace with new view controller
             self.topViewController = viewController;
             self.topViewController.view.frame = CGRectMake(0, 0, self.containerView.frame.size.width, self.containerView.frame.size.height);
@@ -384,6 +432,9 @@
 {}
 
 - (void)willChangeTopViewController
+{}
+
+- (void)didFinishSliding
 {}
 
 @end

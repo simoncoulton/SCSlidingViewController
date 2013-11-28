@@ -55,6 +55,9 @@
 - (void)willChangeTopViewController;
 - (void)didChangeTopViewController;
 
+#pragma mark Slide events
+- (void)didFinishSliding;
+
 #pragma mark Shadow
 - (void)viewHasShadow:(BOOL)hasShadow withColor:(UIColor *)color withCornerRadius:(CGFloat)cornerRadius withShadowOffsetX:(CGFloat)shadowOffsetX withShadowOffsetY:(CGFloat)shadowOffsetY andOpacity:(CGFloat)opacity;
 
