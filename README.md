@@ -78,3 +78,7 @@ The following events are called when the top view is changed (but are not trigge
 2. Ability to round corners of content in UINavigationController
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/simoncoulton/scslidingviewcontroller/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/simoncoulton/scslidingviewcontroller/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
